@@ -33,8 +33,12 @@ Prompt for Claude Code when ready:
 
 ---
 
-## 4. Split into three separate files (HTML / CSS / JS)
-Refactor the single `crystal-court-demo.html` into three clean files:
+## 4. Split into three separate files (HTML / CSS / JS) — ✅ DONE (2026-06)
+Done: the active build is now `beast-of-crystal-court-demo.html` + `style.css` + `game.js` (no inline
+style/script). The original `crystal-court-demo.html` is kept untouched as a frozen reference. New work
+goes in the split files; keep style/script external from here on.
+
+Original request (for reference) — refactor the single `crystal-court-demo.html` into three clean files:
 - `index.html` — structure only
 - `style.css` — all styles
 - `game.js` — all JavaScript/game logic

@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crystal Court — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<div id="wrap">
+  <div class="topbar"><h1>CRYSTAL&nbsp;COURT</h1><span class="sub">OPEN TILL DAWN</span></div>
+
+  <div id="scene1">
+    <canvas id="room" width="240" height="135"></canvas>
+    <div class="textbox">
+      <div id="log" class="log"></div>
+      <div class="barrow"><span id="cont1" class="continue" hidden>[ ENTER &#9656; ]</span></div>
+      <div id="hint1" class="hint"></div>
+    </div>
+  </div>
+
+  <div id="scene2" hidden>
+    <div id="stage2">
+      <div class="phone" id="phone"><div class="phonebar" id="phonebar">Feed</div><div id="phonescreen" class="phonescreen"></div></div>
+      <div class="terminal" id="terminal" hidden>
+        <div class="termbar"><span class="dot"></span><span>Lenny@rig — bash</span></div>
+        <div id="termscreen" class="termscreen"></div>
+      </div>
+      <div class="videoview" id="videoview" hidden><canvas id="vid" width="240" height="135"></canvas></div>
+    </div>
+    <div id="s2narr"></div>
+    <div class="prompt2"><span id="cont2" class="continue" hidden>[ ENTER &#9656; ]</span><div id="chips" class="chips"></div></div>
+    <div class="hint" id="hint2"></div>
+  </div>
+
+  <!-- SCENE 3 — Library (illustrated typed-parser scene) -->
+  <div id="scene3" hidden>
+    <canvas id="lib" width="240" height="135"></canvas>
+    <div class="textbox">
+      <div id="s3log" class="log"></div>
+      <div class="barrow"><span id="cont3" class="continue" hidden>[ ENTER &#9656; ]</span><div id="chips3" class="chips"></div></div>
+      <form id="parserform" class="parserrow" hidden autocomplete="off">
+        <span class="parserprompt">&gt;</span>
+        <input id="parser" class="parserinput" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="type a command — e.g. look">
+      </form>
+      <div class="hint" id="cmdhint"></div>
+    </div>
+  </div>
+</div>
+
+<div class="title" id="titleScreen">
+  <h1>CRYSTAL<br>COURT</h1>
+  <div class="tag">DEMO · SCENES 1–2</div>
+  <div class="tag2">An 8-bit horror. The mall's been gone for years. Tonight someone's missing.</div>
+  <button class="start" id="continueBtn" hidden>▶ CONTINUE</button>
+  <button class="start" id="startBtn">▶ PRESS START</button>
+</div>
+<div id="card" class="card" hidden><div class="cardtext"></div></div>
+
+<script src="game.js" defer></script>

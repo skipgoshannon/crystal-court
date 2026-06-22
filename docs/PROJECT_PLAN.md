@@ -24,7 +24,7 @@ work begins. **Do not start Stage 2 until the author signs off.**
 - Use simple 1-bit **stand-in** images; the author supplies final art.
 - The author adds **background music later** — leave labeled hooks, add no audio files.
 - Keep the look/pacing identical to what's there (see `docs/GAME_DESIGN.md`). No color, no glow.
-- No browser storage (`localStorage`); keep game state in memory.
+- Saves may use `localStorage` (author-approved 2026-06, for resume-later); JSON only, validated, never `eval`'d.
 - Never `eval` player input in the parser; match a known vocabulary with plain string handling.
 
 **Stage 1 steps:**

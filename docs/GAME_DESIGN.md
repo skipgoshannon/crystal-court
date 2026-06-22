@@ -250,8 +250,9 @@ So inside the mall, the loop is: explore top-down → reach a point of interest 
 ## 15. The clock and saves
 
 - The 5-hour in-world window times the inside sections; running out is the loss state.
-- The player can **save frequently** (offer it before choices). Saves use JSON (never pickle); in the
-  HTML build, keep state in memory (no browser storage).
+- The player can **save frequently** (offer it before choices). Saves use JSON (never pickle).
+  **HTML build: saves may use `localStorage`** (author-approved 2026-06, so the player can close the
+  page and resume) — JSON only, validated on load, never `eval`'d. (Python stage uses JSON files.)
 
 ## 16. Audio (author adds later)
 

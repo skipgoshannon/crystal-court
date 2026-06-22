@@ -1,7 +1,7 @@
 # CLAUDE.md — The Beast of Crystal Court
 
 > This file loads at the start of every Claude Code session. Keep it short and high-signal.
-> Deep detail lives in `docs/GAME_DESIGN.md`, `docs/PROJECT_PLAN.md`, and `docs/CLAUDE_CODE_WORKFLOW.md`.
+> Deep detail lives in `docs/GAME_DESIGN.md`, `docs/SKILL.md`, and `docs/PROJECT_PLAN.md`.
 
 ## What this project is
 **The Beast of Crystal Court** is an 8-bit, **black-and-white (1-bit)** horror game.
@@ -16,6 +16,11 @@ This is a **two-stage** project:
    this stage until told.
 
 ## ⚑ Working on the HTML prototype (the current stage)
+- **How to run/verify:** one self-contained file — open `crystal-court-demo.html` directly in a
+  browser (no build, no server, no install). Press Start unlocks audio and begins Scene 1. Verify any
+  change by playing through the affected scene(s) in the browser before calling it done (Golden #4).
+- **Before writing any code in the file, read `docs/SKILL.md`** — it documents the existing helpers,
+  the canvas/dither art system, view-switching, and exact pacing so new work matches what's there.
 - **The existing file `crystal-court-demo.html` is the source of truth. Follow it to a tee.**
 - **Do not change anything already in that file. Only ADD to it as we build forward.** The single
   change already made is that the friend's Linux-terminal typing was slowed for readability; no other
@@ -55,16 +60,19 @@ This is a **two-stage** project:
 ## Security & safety (non-negotiable, both stages)
 - **The text parser must NEVER call `eval()`/`exec()`/`os.system()` (or JS `eval`) on player input.**
   Parse commands with plain string matching only.
-- **Saves use JSON, never `pickle`** (and no browser `localStorage` in the HTML artifact — keep state
-  in memory). Validate anything loaded.
+- **Saves use JSON, never `pickle`**; validate anything loaded. **Stage-1 HTML saves may use
+  `localStorage`** (author-approved 2026-06 — the prototype needs resume-later); keep it JSON-only and
+  validated, never `eval`'d. (Python stage uses JSON files.)
 - **No telemetry, no analytics, no network calls.** Single-player, offline. The pygbag service worker
   may cache only our own local assets.
 - **No secrets in the repo.** Add only trusted, pinned packages; flag each addition.
 
 ## Where the detail lives
 - `docs/GAME_DESIGN.md` — authoritative look, layout, pacing, story, systems (read this before building).
+- `docs/SKILL.md` — **how to build inside `crystal-court-demo.html`**: existing helpers, the canvas/
+  dither art system, view-switching, and exact pacing. Read before writing any code in the file.
 - `docs/PROJECT_PLAN.md` — the phased roadmap (HTML prototype first, Python later).
-- `docs/CLAUDE_CODE_WORKFLOW.md` — how we work, safety settings, review subagent, skills.
+- `docs/PENDING_CHANGES.md` — the author's backlog of tweaks (some the author makes directly).
 
 ## When unsure
 Ask. A 10-second question is cheaper than an hour of rework.
