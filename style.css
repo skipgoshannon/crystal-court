@@ -66,6 +66,30 @@ body{color:var(--w);font-family:"VT323",ui-monospace,Menlo,Consolas,monospace;-w
 .chip{font-family:"VT323",monospace;font-size:clamp(16px,2.3vw,20px);color:var(--w);background:#000;border:1px solid var(--w);border-radius:0;padding:7px 14px;cursor:pointer}
 .chip:hover,.chip:focus-visible{background:var(--w);color:#000;outline:none}
 
+/* TOP-DOWN (Zelda-style) — shared by kitchen + lot */
+#td{flex:1;position:relative;display:flex;min-height:0;background:#000}
+#world{flex:1;min-height:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;background:#000;display:block;touch-action:none}
+/* action / dialogue pop-up */
+.tdbox{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(900px,92vw);background:#000;border:1px solid var(--w);padding:12px 16px;z-index:5}
+.tdtext{font-size:clamp(17px,2.5vw,22px);line-height:1.32;color:#d6d6d6;max-width:860px;margin:0 auto}
+.tdtext b{color:var(--w)}
+/* framed post-ritual still (Scene-1/2 look) */
+.still{position:absolute;inset:0;z-index:6;background:#000;display:flex;flex-direction:column;min-height:0}
+#stillart{width:100%;height:56vh;object-fit:contain;image-rendering:pixelated;background:#000;display:block;border-bottom:1px solid var(--ln)}
+.stilltext{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;font-size:clamp(18px,2.6vw,23px);line-height:1.32;color:#d6d6d6;padding:14px clamp(12px,4vw,40px);max-width:920px;margin:0 auto;width:100%}
+.stilltext .subtle{color:var(--dim);font-size:14px}
+/* touch controls */
+.touch{position:absolute;inset:0;z-index:4;pointer-events:none}
+.touch .dpad,.touch .actionbtn{pointer-events:auto}
+.dpad{position:absolute;left:14px;bottom:14px;width:132px;height:132px}
+.dbtn{position:absolute;width:42px;height:42px;background:#000;color:var(--w);border:1px solid var(--w);font-size:16px;line-height:1;cursor:pointer;font-family:ui-monospace,monospace;display:flex;align-items:center;justify-content:center}
+.dbtn:active{background:var(--w);color:#000}
+.dbtn.up{left:45px;top:0}.dbtn.down{left:45px;bottom:0}.dbtn.left{left:0;top:45px}.dbtn.right{right:0;top:45px}
+.actionbtn{position:absolute;right:18px;bottom:24px;width:64px;height:64px;border-radius:50%;background:#000;color:var(--w);border:1px solid var(--w);font-size:26px;cursor:pointer}
+.actionbtn:active{background:var(--w);color:#000}
+@media (pointer:fine){.touch{opacity:.55}.touch:hover{opacity:1}}
+@media (prefers-reduced-motion:reduce){.contStill,.contTD{animation:none}}
+
 .title{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:10;padding:20px;text-align:center}
 .title h1{font-family:"Press Start 2P",monospace;color:var(--w);font-size:clamp(20px,6vw,40px);margin:0;line-height:1.5;letter-spacing:2px}
 .title .tag{color:var(--dim);letter-spacing:3px;font-size:clamp(12px,3vw,16px)}

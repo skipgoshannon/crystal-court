@@ -217,7 +217,8 @@
      JSON only; validated on load; never eval'd; no network/telemetry. */
   const SAVE_KEY='bocc.save.v1';
   const DEFAULT_STATE=()=>({v:1,scene:'title',beat:null,
-    flags:{loreFound:false,ritualFound:false,incantationWritten:false,reflectionSeen:false}});
+    flags:{loreFound:false,ritualFound:false,incantationWritten:false,reflectionSeen:false},
+    inv:{salt:false,knife:false,token:false}});
   let state=DEFAULT_STATE();
   function hasSave(){try{return !!localStorage.getItem(SAVE_KEY);}catch(e){return false;}}
   function saveGame(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));return true;}catch(e){return false;}}
@@ -227,8 +228,9 @@
     return d;}catch(e){return null;}}
   function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
   function applyState(d){state=Object.assign(DEFAULT_STATE(),d);
-    state.flags=Object.assign(DEFAULT_STATE().flags,(d&&d.flags)||{});}
-  function checkpoint(beat){state.scene='library';if(beat)state.beat=beat;saveGame();}
+    state.flags=Object.assign(DEFAULT_STATE().flags,(d&&d.flags)||{});
+    state.inv=Object.assign(DEFAULT_STATE().inv,(d&&d.inv)||{});}
+  function checkpoint(beat){if(beat)state.beat=beat;saveGame();} /* scene is set by each scene on entry */
 
   /* ===================== TYPED PARSER (verb–noun; never eval) ===================== */
   const VERBS={
@@ -302,7 +304,7 @@
     if(!state.flags.loreFound) return "Lenny: “Start with what it actually is. Howie all but lived in one book in here — go READ BOOK.”";
     if(!state.flags.ritualFound) return "Lenny: “We know what it is. Now — how did he plan to reach it? The old papers. EXAMINE MICROFILM.”";
     if(!state.flags.incantationWritten) return "Lenny: “We've got the recipe but not the words. Say so and I'll dig — SEARCH INTERNET.”";
-    return "Lenny: “Salt, ash, a token, the words, your blood. Everything we can get is here. The rest is out there — GO when you're ready.”";
+    return "Lenny: “Salt, a token, the words, your blood. Everything we can learn is here. The rest is out there — GO when you're ready.”";
   }
 
   function lookRoom(){
@@ -319,8 +321,8 @@
   function doMicro(){
     if(state.flags.ritualFound){s3line("You spool back through the same columns. (You have the ritual.)");return;}
     s3line("You wind through decades of the Pleasant Valley Ledger. Every fifteen or twenty years, the same small story: someone gone near the old grounds, always in the dead of night, always under a full moon.");
-    s3line("Tucked in a 1968 column on “local superstitions,” a recipe. To open the way: after midnight and before dawn, beneath the moon, mark the old atrium ground with a ring of salt and ash. Bring a token the place has already touched — something it remembers. Speak the words. Pay it a little of your own blood. The way opens only for whoever bleeds.");
-    s3line("Lenny: “Salt and ash we can buy. The words I can chase down. The token… and the blood are on you, River.”",'lenny');
+    s3line("Tucked in a 1968 column on “local superstitions,” a recipe. To open the way: after midnight and before dawn, beneath the moon, mark the old atrium ground with a ring of salt. Bring a token the place has already touched — something it remembers. Speak the words. Pay it a little of your own blood. The way opens only for whoever bleeds.");
+    s3line("Lenny: “Salt we can grab from your kitchen. The words I can chase down. The token… and the blood are on you, River.”",'lenny');
     state.flags.ritualFound=true;checkpoint('microfilm');
   }
   function doWindow(){
@@ -339,7 +341,7 @@
     await cmd("ia fetch grimoire_1899 --page 114 --raw");
     out("page 114/320 … rendering");
     await sleep(700);
-    out("=== TO CALL THE GATHERING ===\n  [the incantation — author to supply, in [LANGUAGE]]\n  spoken over salt and ash, beneath the moon,\n  and sealed with the blood of the one who would enter.");
+    out("=== TO CALL THE GATHERING ===\n  [the incantation — author to supply, in [LANGUAGE]]\n  spoken over a ring of salt, beneath the moon,\n  and sealed with the blood of the one who would enter.");
     await sleep(700);
     s2narr('You copy the words by hand into your notebook. Paper, not a screen — screens are how it gets in.');
     await chips(['Back to the books']);
@@ -402,21 +404,14 @@
     await waitGo($('#cont3'));
     s3clear();s3line("Lenny: “So. Tonight. The old lot, after midnight.”",'lenny');
     await waitGo($('#cont3'));
-    s3clear();s3line("Salt and ash in your bag. The words in your notebook. A little of your own blood to spend. The way opens only for whoever bleeds — Lenny can drive you out there, but he can't cross.");
+    s3clear();s3line("Salt and a knife to grab at home, the words already in your notebook, a little of your own blood to spend. The way opens only for whoever bleeds — Lenny can drive you out, but he can't cross.");
     await waitGo($('#cont3'));
     s3clear();s3line("<b>YOU:</b> “Then I cross. Let's go get Howie.”",'cmd');
     await waitGo($('#cont3'));
-    /* MUSIC HOOK: cue the tense "drive out to the lot" theme here (author adds later) */
-    await showCard("THAT NIGHT");
-    state.scene='lot';saveGame();
-    s3clear();
-    s3line("—  THE EMPTY LOT, AFTER MIDNIGHT  —");
-    s3line("(End of the library. The parking-lot scene comes next.)",'lenny');
-    showParser(false);
-    $('#chips3').innerHTML='';
-    const again=document.createElement('button');again.className='chip';again.textContent='↻ Play again';
-    again.onclick=()=>{clearSave();location.reload();};
-    $('#chips3').appendChild(again);
+    /* MUSIC HOOK: cue the quiet pre-ritual / prep theme here (author adds later) */
+    await showCard("THAT EVENING");
+    $('#scene3').hidden=true;
+    kitchen();
   }
 
   async function library(resuming){
@@ -435,13 +430,262 @@
     await libraryHub();
   }
 
+  /* ===================== TOP-DOWN ENGINE (Zelda-style) =====================
+     The prototype's first real-time loop. One engine, two maps (kitchen, lot).
+     Action-button + text pop-up interactions ("Mode A"); no typed parser here. */
+  const wcv=$('#world'), wx=wcv.getContext('2d');
+  const wR=(a,b,c,d)=>wx.fillRect(a|0,b|0,c|0,d|0);
+  const tdbox=$('#tdbox'), tdtext=$('#tdtext');
+  let tdRunning=false, tdPaused=false, raf=0;
+  const held={up:false,down:false,left:false,right:false};
+  let actionPressed=false;
+  const KEYDIR={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',
+    w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
+  addEventListener('keydown',e=>{
+    if(!tdRunning)return;
+    const dir=KEYDIR[e.key];
+    if(dir){held[dir]=true;e.preventDefault();return;}
+    if(!tdPaused&&(e.key===' '||e.key==='e'||e.key==='E'||e.key==='Enter')){actionPressed=true;e.preventDefault();}
+  });
+  addEventListener('keyup',e=>{const dir=KEYDIR[e.key];if(dir)held[dir]=false;});
+  document.querySelectorAll('#touch .dbtn').forEach(b=>{
+    const dir=b.getAttribute('data-dir');
+    const on=e=>{e.preventDefault();held[dir]=true;};
+    const off=e=>{e.preventDefault();held[dir]=false;};
+    b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);
+    b.addEventListener('pointerleave',off);b.addEventListener('pointercancel',off);
+  });
+  $('#actionbtn').addEventListener('pointerdown',e=>{e.preventDefault();if(tdRunning&&!tdPaused)actionPressed=true;});
+
+  function tdSay(html){tdtext.innerHTML=html;tdbox.hidden=false;blip(200,.03,'square',.015);
+    return waitGo($('#contTD')).then(()=>{tdbox.hidden=true;});}
+
+  /* collision helpers — rects are [x,y,w,h]; player is a small AABB centered on (x,y) */
+  function rectsOverlap(ax,ay,aw,ah,bx,by,bw,bh){return ax<bx+bw&&ax+aw>bx&&ay<by+bh&&ay+ah>by;}
+  function blocked(map,cx,cy){const hw=4,hh=3,x=cx-hw,y=cy-hh,w=hw*2,h=hh*2;
+    const b=map.bounds;if(x<b[0]||y<b[1]||x+w>b[0]+b[2]||y+h>b[1]+b[3])return true;
+    for(const s of map.solids)if(rectsOverlap(x,y,w,h,s[0],s[1],s[2],s[3]))return true;return false;}
+  function moveAABB(map,P,dx,dy){if(dx&&!blocked(map,P.x+dx,P.y))P.x+=dx;if(dy&&!blocked(map,P.x,P.y+dy))P.y+=dy;}
+  function followLenny(map,L,P){let tx=P.x,ty=P.y+14;
+    if(map.lennyMinY!=null)ty=Math.max(ty,map.lennyMinY); // can't cross past the grass line onto the lot
+    const dx=tx-L.x,dy=ty-L.y;if(Math.hypot(dx,dy)>9){L.x+=dx*0.07;L.y+=dy*0.07;
+      if(map.lennyMinY!=null)L.y=Math.max(L.y,map.lennyMinY);}}
+  function itemLive(i){return !(i.flag&&state.inv[i.flag]);}
+  function nearest(map,px,py){let best=null,bd=1e9;
+    const all=map.items.filter(itemLive).concat(map.pois);
+    for(const t of all){const d=Math.hypot(t.x-px,t.y-py),r=t.r||12;if(d<=r&&d<bd){bd=d;best=t;}}return best;}
+
+  /* 1-bit stand-in people (author swaps for sprite art later) */
+  function drawRiver(x,y){wx.fillStyle='#000';wR(x-5,y-16,10,16);wx.fillStyle='#f3f3f3';wR(x-4,y-15,8,14);wx.fillStyle='#000';wR(x-3,y-12,2,2);wR(x+1,y-12,2,2);}
+  function drawLenny(x,y){wx.fillStyle='#f3f3f3';wR(x-5,y-16,10,16);wx.fillStyle='#000';wR(x-4,y-15,8,14);}
+  function drawWorld(map,P,L,prompt){
+    map.draw(wx);
+    for(const i of map.items)if(itemLive(i)&&i.draw)i.draw(wx,i);
+    for(const p of map.pois)if(p.draw)p.draw(wx,p);
+    const ppl=[{x:P.x,y:P.y,me:1},{x:L.x,y:L.y,me:0}].sort((a,b)=>a.y-b.y);
+    for(const pr of ppl)pr.me?drawRiver(pr.x,pr.y):drawLenny(pr.x,pr.y);
+    if(prompt&&((performance.now()/350)|0)%2===0){const mx=prompt.x,my=prompt.y-(prompt.mk||20);
+      wx.fillStyle='#f3f3f3';wR(mx-3,my,6,4);wR(mx-1,my+4,2,3);}
+  }
+
+  function runTopDown(map){
+    $('#scene1').hidden=true;$('#scene2').hidden=true;$('#scene3').hidden=true;$('#td').hidden=false;
+    tdbox.hidden=true;$('#still').hidden=true;
+    for(const k in held)held[k]=false;actionPressed=false;
+    const P={x:map.spawn.x,y:map.spawn.y},L={x:(map.lennySpawn||map.spawn).x,y:(map.lennySpawn||map.spawn).y};
+    const SPEED=1.15;tdRunning=true;tdPaused=false;
+    function step(){
+      if(!tdRunning)return;
+      if(!tdPaused){
+        let vx=(held.right?1:0)-(held.left?1:0),vy=(held.down?1:0)-(held.up?1:0);
+        if(vx&&vy){vx*=.7071;vy*=.7071;}
+        moveAABB(map,P,vx*SPEED,vy*SPEED);
+        followLenny(map,L,P);
+        const prompt=nearest(map,P.x,P.y);
+        if(actionPressed){actionPressed=false;
+          if(prompt){tdPaused=true;blip(300,.04);
+            Promise.resolve((prompt.onTake?prompt.onTake(prompt,P,L):prompt.onAction(prompt,P,L)))
+              .then(()=>{tdbox.hidden=true;tdPaused=false;});}}
+        drawWorld(map,P,L,prompt);
+      }
+      raf=requestAnimationFrame(step);
+    }
+    raf=requestAnimationFrame(step);
+  }
+  function stopTopDown(){tdRunning=false;cancelAnimationFrame(raf);}
+
+  /* ===================== SCENE 4 — KITCHEN (top-down) ===================== */
+  function drawKitchen(g){
+    g.fillStyle='#000';g.fillRect(0,0,240,135);
+    g.fillStyle=dith(g,.05);g.fillRect(0,0,240,20);                 // upper wall
+    // floor (faint dithered tiles)
+    g.fillStyle=dith(g,.12);g.fillRect(0,20,240,115);
+    g.strokeStyle='#555';for(let x=0;x<=240;x+=24){g.beginPath();g.moveTo(x+.5,20);g.lineTo(x+.5,135);g.stroke();}
+    for(let y=44;y<135;y+=24){g.beginPath();g.moveTo(0,y+.5);g.lineTo(240,y+.5);g.stroke();}
+    g.strokeStyle='#f3f3f3';g.lineWidth=1;
+    const counter=(x,w)=>{g.fillStyle='#000';g.fillRect(x,20,w,20);g.strokeRect(x+.5,20.5,w,20);};
+    counter(10,100);counter(134,16);                                // top counters (gap = doorway)
+    // drawer faces + handles on the left counter
+    g.strokeStyle='#f3f3f3';
+    [28,55,82].forEach(dx=>{g.strokeRect(dx+.5,26.5,22,9);g.fillStyle='#f3f3f3';g.fillRect(dx+8,30,6,2);});
+    // stove + 4 burners
+    g.fillStyle='#000';g.fillRect(150,20,36,20);g.strokeRect(150.5,20.5,36,20);
+    g.fillStyle=dith(g,.5);[157,173].forEach(bx=>[26,33].forEach(by=>g.fillRect(bx,by,6,4)));
+    // sink basin
+    g.fillStyle='#000';g.fillRect(186,20,44,20);g.strokeRect(186.5,20.5,44,20);g.fillStyle=dith(g,.4);g.fillRect(196,25,24,10);
+    // doorway (gap) marker — way out
+    g.fillStyle=dith(g,.25);g.fillRect(110,8,24,12);g.fillStyle='#f3f3f3';g.fillRect(110,8,2,12);g.fillRect(132,8,2,12);
+    // table
+    g.fillStyle='#000';g.fillRect(96,72,48,26);g.strokeRect(96.5,72.5,48,26);
+    // fridge (right wall)
+    g.fillStyle='#000';g.fillRect(212,46,20,40);g.strokeRect(212.5,46.5,20,40);g.fillStyle='#f3f3f3';g.fillRect(214,64,2,8);
+  }
+  async function kitchenDrawer(name,flag,found,empty){
+    if(state.inv[flag]){await tdSay(empty);return;}
+    state.inv[flag]=true;checkpoint(name);await tdSay(found);
+  }
+  function kitchenMap(){return {
+    id:'kitchen',draw:drawKitchen,spawn:{x:120,y:120},lennySpawn:{x:142,y:122},
+    bounds:[10,40,220,92],
+    solids:[[10,20,100,20],[134,20,16,20],[150,20,36,20],[186,20,44,20],[96,72,48,26],[212,46,20,40]],
+    items:[],
+    pois:[
+      {x:39,y:42,r:14,mk:18,onAction:()=>kitchenDrawer('salt','salt',
+        "You slide the drawer open. Behind the takeout menus — a heavy blue cylinder of salt. You drop it in your bag.",
+        "Just the empty space where the salt was.")},
+      {x:66,y:42,r:12,mk:18,onAction:()=>tdSay("Dish towels, rubber bands, a dead battery. The junk drawer earns its name.")},
+      {x:93,y:42,r:14,mk:18,onAction:()=>kitchenDrawer('knife','knife',
+        "Under the spare keys: your dad's old pocketknife, bone handle worn smooth. You fold it into your pocket.",
+        "Empty now — the knife's in your pocket.")},
+      {x:122,y:42,r:16,mk:18,onAction:async()=>{
+        if(state.inv.salt&&state.inv.knife){stopTopDown();await showCard("THE OLD LOT · AFTER MIDNIGHT");lot();}
+        else await tdSay("Not yet. You came down for the salt and your dad's old pocketknife — they're in the drawers.");}},
+    ],
+  };}
+  function kitchen(resuming){state.scene='kitchen';checkpoint('kitchen');
+    runTopDown(kitchenMap());
+    if(!resuming)setTimeout(()=>{if(tdRunning&&!tdPaused){tdPaused=true;
+      tdSay("Past eleven. Your kitchen, lights low. <b>Lenny:</b> “Grab the salt and a knife. I'll keep watch for your roommate.” (Walk to the drawers — press ✦ — then head out the doorway up top.)")
+        .then(()=>{tdPaused=false;});}},120);
+  }
+
+  /* ===================== SCENE 5 — PARKING LOT (top-down) ===================== */
+  function drawLot(g){
+    g.fillStyle='#000';g.fillRect(0,0,240,135);
+    // cement lot (upper) — light, cracked
+    g.fillStyle=dith(g,.16);g.fillRect(0,0,240,98);
+    g.strokeStyle='#555';for(let x=20;x<240;x+=40){g.beginPath();g.moveTo(x+.5,8);g.lineTo(x+.5,90);g.stroke();}
+    // cracks
+    g.strokeStyle='#777';g.beginPath();g.moveTo(40,30);g.lineTo(70,55);g.lineTo(60,80);g.moveTo(180,20);g.lineTo(160,60);g.stroke();
+    // moon
+    g.fillStyle='#f3f3f3';g.beginPath();g.arc(208,24,12,0,7);g.fill();g.fillStyle='#000';g.beginPath();g.arc(203,21,11,0,7);g.fill();
+    // grass band (lower)
+    g.fillStyle=dith(g,.6);g.fillRect(0,98,240,37);g.fillStyle='#000';g.fillRect(0,96,240,2);
+    // Howie's sigil burned/scrawled on the cement
+    g.strokeStyle='#f3f3f3';g.lineWidth=1;g.beginPath();g.arc(120,50,17,0,7);g.stroke();
+    g.beginPath();g.moveTo(120,35);g.lineTo(120,65);g.moveTo(105,50);g.lineTo(135,50);
+    g.moveTo(109,39);g.lineTo(131,61);g.moveTo(131,39);g.lineTo(109,61);g.stroke();
+    // the parked car (on the grass)
+    g.fillStyle='#000';g.fillRect(150,104,52,22);g.strokeStyle='#f3f3f3';g.strokeRect(150.5,104.5,52,22);
+    g.fillStyle=dith(g,.4);g.fillRect(156,108,16,8);g.fillRect(180,108,16,8);
+  }
+  function ritualReady(){return state.inv.salt&&state.inv.knife&&state.inv.token&&state.flags.incantationWritten;}
+  function lotMissing(){const need=[];if(!state.inv.token)need.push("the token from the ground");if(!state.inv.salt)need.push("the salt");if(!state.inv.knife)need.push("the knife");return need;}
+  function lotMap(){return {
+    id:'lot',draw:drawLot,spawn:{x:120,y:120},lennySpawn:{x:168,y:118},lennyMinY:104,
+    bounds:[6,8,228,122],
+    solids:[[150,104,52,22]],
+    items:[{x:150,y:58,flag:'token',r:12,mk:14,
+      draw:(g,i)=>{g.fillStyle='#f3f3f3';g.fillRect(i.x-3,i.y-3,6,6);g.fillStyle='#000';g.fillRect(i.x-1,i.y-1,2,2);},
+      onTake:async i=>{state.inv.token=true;checkpoint('token');
+        await tdSay("A small tarnished medallion, half-pressed into the asphalt where the police left it — too odd to bag, too dull to steal. It's warm. <b>You pocket the token.</b>");}}],
+    pois:[{x:120,y:50,r:20,mk:24,onAction:async()=>{
+      if(!ritualReady()){const m=lotMissing();
+        await tdSay(m.length?("Howie's circle, scratched into the cement. You're not ready — you still need "+m.join(", ")+".")
+          :"Howie's circle. You have everything but the words — and those are in your notebook. (You should be ready.)");return;}
+      stopTopDown();await ritualSequence();}}],
+  };}
+  function lot(resuming){state.scene='lot';checkpoint('lot');
+    runTopDown(lotMap());
+    if(!resuming)setTimeout(()=>{if(tdRunning&&!tdPaused){tdPaused=true;
+      tdSay("The old lot. Past midnight, dead quiet, the moon high. Somewhere up on the cracked cement is Howie's circle — and the token the police left behind. <b>Lenny stays by the car.</b> (Find the token, then the circle.)")
+        .then(()=>{tdPaused=false;});}},120);
+  }
+
+  /* ---- the summoning + the framed "awe" still + Lenny stays behind ---- */
+  async function ritualSequence(){
+    tdbox.hidden=false;
+    await tdSay("You shake the salt out in a slow ring over Howie's faded sigil.");
+    await tdSay("You set the token in the center. It hums, cold, against the cement.");
+    await tdSay("From your notebook you read the words aloud — the older tongue catching strange in your mouth.");
+    await tdSay("You open the knife and draw it across your palm. Three dark drops fall onto the salt.");
+    /* MUSIC HOOK: ritual stinger / the mall "powering on" swell (author adds later) */
+    await tdSay("The air pulls tight — like the whole lot took a breath and held it.");
+    await ritualAftermath();
+  }
+  const stillart=$('#stillart'),sx=stillart.getContext('2d');
+  function drawAweFaces(){ /* 1-bit stand-in — author replaces with the real portrait */
+    sx.fillStyle='#000';sx.fillRect(0,0,240,135);
+    sx.fillStyle=dith(sx,.5);sx.fillRect(0,0,240,46);              // glow from above (the mall's light)
+    const face=(cx,white)=>{const top=54;
+      sx.fillStyle='#f3f3f3';sx.fillRect(cx-22,top-2,44,2);        // lit hairline
+      sx.fillStyle=white?'#f3f3f3':'#000';sx.fillRect(cx-20,top,40,58);
+      sx.fillStyle=white?'#000':'#f3f3f3';sx.fillRect(cx-19,top+1,38,56);   // face fill
+      // wide eyes (awe)
+      sx.fillStyle=white?'#f3f3f3':'#000';sx.fillRect(cx-12,top+22,9,7);sx.fillRect(cx+3,top+22,9,7);
+      sx.fillStyle=white?'#000':'#f3f3f3';sx.fillRect(cx-9,top+24,3,3);sx.fillRect(cx+6,top+24,3,3);
+      // small open mouth
+      sx.fillRect(cx-3,top+42,6,5);
+    };
+    face(74,false); face(166,true);
+  }
+  function stillBeat(html){$('#stilltext').innerHTML=html;return waitGo($('#contStill'));}
+  async function ritualAftermath(){
+    tdbox.hidden=true;stopTopDown();
+    $('#scene1').hidden=true;$('#scene2').hidden=true;$('#scene3').hidden=true;$('#td').hidden=false;
+    drawAweFaces();$('#still').hidden=false;
+    await stillBeat("Light slams up out of the empty lot — glass and chrome and a thousand windows. <b>Crystal Court stands whole again</b>, humming like it never left 1985. You and Lenny stare up at it, mouths open.");
+    await stillBeat("<b>Lenny:</b> “…Okay. It's real. It's <i>extremely</i> real.”");
+    await stillBeat("He takes a step toward the light with you — and stops short, palm flat against nothing, like a wall only he can feel.");
+    await stillBeat("<b>Lenny:</b> “I can't. It won't let me in. The way only opened for you.”");
+    await stillBeat("<b>YOU:</b> “Then come back to the car. I'm not doing the next part with you standing here looking like that.”");
+    await stillBeat("<b>Lenny:</b> “No — listen. It's better this way. I stay out here, I keep digging — floor plans, the old book, anything Howie missed. And if it goes wrong, I'm the one who can call for help.”");
+    await stillBeat("Neither of you says the obvious: that there's no help to call for a place that isn't supposed to exist. But it makes the standing-still bearable, so you both let it stand.");
+    await stillBeat("<b>YOU:</b> “Keep your phone on. I mean it.”  <b>Lenny:</b> “Glued to my hand. Go get him.”");
+    /* MUSIC HOOK: lonely "crossing over" theme as River steps in (author adds later) */
+    await showCard("CRYSTAL COURT — OPEN TILL DAWN");
+    lotEndPlaceholder();
+  }
+  function lotEndPlaceholder(){
+    clearSave(); /* nothing past this is built yet; start fresh next time */
+    drawAweFaces();$('#still').hidden=false;
+    $('#stilltext').innerHTML='';
+    const p=document.createElement('div');p.textContent='—  TO BE CONTINUED  —';$('#stilltext').appendChild(p);
+    const q=document.createElement('div');q.className='subtle';q.textContent='River steps inside. (The mall interior comes next.)';$('#stilltext').appendChild(q);
+    const again=document.createElement('button');again.className='chip';again.textContent='↻ Play again';again.onclick=()=>{clearSave();location.reload();};
+    $('#stilltext').appendChild(again);
+    $('#contStill').hidden=true;
+  }
+
+  function resumeFromSave(){
+    switch(state.scene){
+      case 'kitchen': kitchen(true); break;
+      case 'lot': lot(true); break;
+      case 'library': library(true); break;
+      default: scene1();
+    }
+  }
+
   /* ===================== BOOT ===================== */
   room();
   $('#scene3').addEventListener('click',tapAdvance);
   $('#cont3').onclick=()=>waiter&&waiter();
+  $('#td').addEventListener('click',tapAdvance);   // advance pop-ups by tapping the world (not the buttons)
+  $('#still').addEventListener('click',tapAdvance);
+  $('#contTD').onclick=()=>waiter&&waiter();
+  $('#contStill').onclick=()=>waiter&&waiter();
   function startAudio(){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}blip(330,.06,'square',.03);}
   (function initTitle(){const d=loadGame();if(d){applyState(d);$('#continueBtn').hidden=false;}})();
   $('#startBtn').onclick=()=>{startAudio();state=DEFAULT_STATE();$('#titleScreen').style.display='none';scene1();};
-  $('#continueBtn').onclick=()=>{startAudio();$('#titleScreen').style.display='none';
-    (state.scene==='library'||state.scene==='lot')?library(true):scene1();};
+  $('#continueBtn').onclick=()=>{startAudio();$('#titleScreen').style.display='none';resumeFromSave();};
 })();

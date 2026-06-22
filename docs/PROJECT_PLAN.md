@@ -30,10 +30,15 @@ work begins. **Do not start Stage 2 until the author signs off.**
 **Stage 1 steps:**
 - **S1.1 — Finish Game 1 (investigate & open the door).** Continue from the library hook: research the
   legend, reconstruct the summoning ritual, gather its parts, perform it outside the lot.
+  *(Progress 2026-06: library research scene done; kitchen prep + parking-lot summoning built as
+  top-down scenes; ritual performed → mall manifests. Dialogue is first-draft.)*
 - **S1.2 — Mall entry + top-down system.** On entry, switch to the **top-down, Zelda-style map** of the
   interior, with movement and area transitions, plus the **two interaction modes**: (A) text-overlay
   with optional deep-dive into a Scene-1/Scene-2-style framed view; (B) the **illustrated parser**
   (image on top, words beneath). See `docs/GAME_DESIGN.md` §14.
+  *(Progress 2026-06: a reusable top-down engine — free movement, rectangle collision, loose follower,
+  on-screen d-pad + action, Mode-A pop-ups — now exists in `game.js` (used by the kitchen + lot);
+  reuse it for the mall interior.)*
 - **S1.3 — Game 2 (inside: survive, reach Howie, learn the enemy).** Reflections behavior; the
   **Howie/mannequin beat** — his eyes move toward his pocket, leading `[PLAYER]` to the notebook.
 - **S1.4 — Game 3 (weapons + free Howie).** Silver blade and iron stake; free Howie via his real name.

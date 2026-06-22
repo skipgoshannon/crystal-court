@@ -53,3 +53,21 @@ Prompt for Claude Code when ready:
 > behave identically to the current single file. Change no content, logic, dialogue, timing, or
 > visual output — only reorganize the code. Verify by opening `index.html` in a browser and
 > playing through both scenes before calling it done.
+
+---
+
+## 5. Top-down polish — kitchen & movement (next session, 2026-06)
+Author feedback on the first top-down build. All in `game.js`:
+
+- **No follower.** Remove Lenny following River around — it feels weird. In the **kitchen, River is
+  alone** (drop Lenny from that scene entirely). Do **not** add any narration explaining his absence —
+  just don't have him there. (Reassess the loose-follow elsewhere too; don't make him trail.)
+- **Don't telegraph the items.** Make finding the salt and pocketknife the player's job — remove the
+  obvious hints (the intro "walk to the drawers — press ✦" line and any text that points at which
+  drawers hold what). Let the player open drawers and discover them.
+- **Collision feels mushy.** River walks partly *onto* cabinets/counters/table. She should be able to
+  walk right **up to** them but not overlap them — tune the player's collision footprint vs. the sprite
+  so she stops flush against solids (align the footprint to her feet / enlarge it to match the sprite).
+
+General note: the build is "a good start"; it'll improve with real art later. These are polish, not a
+redesign — make the minimal change for each; **do not overcorrect.**

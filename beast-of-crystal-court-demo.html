@@ -46,6 +46,32 @@
       <div class="hint" id="cmdhint"></div>
     </div>
   </div>
+
+  <!-- TOP-DOWN scene (Zelda-style): shared by the kitchen and the lot -->
+  <div id="td" hidden>
+    <canvas id="world" width="240" height="135"></canvas>
+    <!-- framed "still" overlay (Scene-1/2 look) for the post-ritual awe beat -->
+    <div id="still" class="still" hidden>
+      <canvas id="stillart" width="240" height="135"></canvas>
+      <div id="stilltext" class="stilltext"></div>
+      <div class="barrow"><span id="contStill" class="continue" hidden>[ ENTER &#9656; ]</span></div>
+    </div>
+    <!-- action / dialogue pop-up box -->
+    <div id="tdbox" class="tdbox" hidden>
+      <div id="tdtext" class="tdtext"></div>
+      <div class="barrow"><span id="contTD" class="continue" hidden>[ ENTER &#9656; ]</span></div>
+    </div>
+    <!-- on-screen touch controls (mobile parity); usable by mouse too -->
+    <div id="touch" class="touch">
+      <div class="dpad">
+        <button class="dbtn up" data-dir="up" aria-label="up">&#9650;</button>
+        <button class="dbtn left" data-dir="left" aria-label="left">&#9664;</button>
+        <button class="dbtn right" data-dir="right" aria-label="right">&#9654;</button>
+        <button class="dbtn down" data-dir="down" aria-label="down">&#9660;</button>
+      </div>
+      <button id="actionbtn" class="actionbtn" aria-label="action">&#10022;</button>
+    </div>
+  </div>
 </div>
 
 <div class="title" id="titleScreen">

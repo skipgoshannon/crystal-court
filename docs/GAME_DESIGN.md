@@ -71,7 +71,8 @@ backing her up.
 ## 4. The three rituals (keep these distinct)
 
 1. **Summoning** (outside, before entering): after midnight and before dawn, under the moon; a sigil
-   drawn in salt and ash over the old atrium footprint; an **ancient token** Howie used (police logged
+   drawn in **salt** over the old atrium footprint (author simplified from "salt and ash" 2026-06 —
+   salt only); an **ancient token** Howie used (police logged
    it but left it on the ground — `[PLAYER]` finds it); an **incantation** found in an old book on the
    Internet Archive (`[FRIEND]` finds it; she writes it down and carries it in); a few drops of her own
    blood from a pocketknife. Because the way opens only for whoever gives blood, **only `[PLAYER]`
@@ -225,6 +226,10 @@ selectable menus.**
   becomes unwinnable.
 
 ## 14. Inside the mall — top-down (Zelda-style) and the two interaction modes
+
+> **Author extension (2026-06):** the top-down mode is now also used *before* the mall — for the
+> **kitchen** (home prep: gather salt + pocketknife) and the **parking lot** (the summoning). Those two
+> use **Mode A only** (action-button text pop-ups, no typed parser). The interior still works as below.
 
 **Immediately after `[PLAYER]` gains entry to the mall, the view becomes a top-down, Zelda-style map of
 the mall interior.** She walks from place to place; screen transitions move between areas. Controls:
