@@ -1,0 +1,315 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crystal Court — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{--w:#f3f3f3;--dim:#9a9a9a;--ln:#555;}
+  *{box-sizing:border-box} html,body{margin:0;height:100%;background:#000}
+  [hidden]{display:none!important}
+  body{color:var(--w);font-family:"VT323",ui-monospace,Menlo,Consolas,monospace;-webkit-font-smoothing:none}
+  #wrap{min-height:100vh;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 12px;border-bottom:1px solid var(--ln)}
+  .topbar h1{font-family:"Press Start 2P",monospace;font-size:clamp(11px,2.4vw,15px);letter-spacing:2px;margin:0;color:var(--w)}
+  .topbar .sub{font-size:clamp(12px,2.4vw,15px);letter-spacing:3px;color:var(--dim)}
+
+  /* SCENE 1 */
+  #scene1{flex:1;display:flex;flex-direction:column;min-height:0}
+  #room{width:100%;height:56vh;object-fit:contain;image-rendering:pixelated;background:#000;display:block;border-bottom:1px solid var(--ln)}
+  .textbox{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px clamp(12px,4vw,40px)}
+  .log{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;font-size:clamp(18px,2.6vw,23px);line-height:1.32;max-width:920px;margin:0 auto;width:100%}
+  .line{margin:0 0 10px;animation:fade .2s ease}
+  .line.you b{color:var(--w);text-decoration:none}
+  .line.narr{color:#d6d6d6}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .barrow{display:flex;align-items:center;justify-content:center;min-height:24px;margin-top:6px}
+  .continue{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--w);cursor:pointer;animation:blink 1.1s steps(1) infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .hint{color:var(--dim);font-size:14px;text-align:center;min-height:16px}
+
+  /* SCENE 2 */
+  #scene2{flex:1;display:flex;flex-direction:column;min-height:0;padding:12px clamp(10px,3vw,32px)}
+  #s2narr{font-size:clamp(18px,2.6vw,23px);line-height:1.3;color:#d6d6d6;text-align:center;padding:6px 6px 12px;min-height:24px;max-width:900px;margin:0 auto}
+  #stage2{flex:1;min-height:0;display:flex;flex-direction:column}
+  .phone{flex:none;width:min(420px,94vw);max-height:min(54vh,460px);margin:8px auto 0;background:#000;border:1px solid var(--ln);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+  .terminal{flex:1;min-height:0;width:100%;background:#000;border:1px solid var(--w);display:flex;flex-direction:column;overflow:hidden}
+  .videoview{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  #vid{width:min(640px,92vw);height:auto;image-rendering:pixelated;border:1px solid var(--w);display:block}
+  .phonebar{font-family:"Press Start 2P",monospace;font-size:9px;letter-spacing:1px;color:var(--dim);text-align:center;padding:8px;border-bottom:1px solid var(--ln)}
+  .termbar{font-family:ui-monospace,monospace;font-size:12px;color:var(--w);padding:6px 10px;border-bottom:1px solid var(--w);display:flex;gap:8px;align-items:center}
+  .termbar .dot{width:9px;height:9px;border:1px solid var(--w);border-radius:0}
+  .phonescreen{padding:10px;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:7px}
+  .termscreen{padding:10px 12px;flex:1;min-height:0;overflow-y:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:clamp(13px,1.7vw,15px);line-height:1.5;color:var(--w);white-space:pre-wrap;word-break:break-word}
+  .termscreen .pr{color:var(--w)} .termscreen .out{color:#c9c9c9} .termscreen .cur{display:inline-block;width:.6em;height:1em;background:var(--w);transform:translateY(2px);animation:blink 1s steps(1) infinite}
+  .msg{font-size:clamp(16px,2.3vw,20px);line-height:1.22;padding:6px 11px;border-radius:11px;width:fit-content;max-width:88%;animation:rise .18s ease}
+  .msg.you{margin-left:auto;background:var(--w);color:#000}
+  .msg.fr{margin-right:auto;background:#000;border:1px solid var(--w);color:var(--w)}
+  .typing{margin-right:auto;background:#000;border:1px solid var(--w);border-radius:11px;padding:8px 11px;width:fit-content}
+  .typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--w);margin:0 2px;opacity:.35;animation:dot 1s infinite}
+  .typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+  @keyframes dot{30%{opacity:1;transform:translateY(-3px)}}
+  @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1}}
+  .newscard{border:1px solid var(--w);border-radius:6px;padding:10px;margin:auto 0}
+  .newscard .lbl{font-family:"Press Start 2P",monospace;font-size:8px;color:var(--dim);margin-bottom:7px}
+  .newscard .b{font-size:clamp(15px,2.2vw,18px);line-height:1.3;color:#dcdcdc}.newscard .b b{color:var(--w)}
+  .vidwrap{margin:8px 0}
+  .vidwrap canvas{width:100%;max-width:320px;image-rendering:pixelated;border:1px solid var(--w);display:block}
+  .vidwrap .cap{color:var(--dim);font-size:13px;margin-top:4px}
+
+  .prompt2{display:flex;align-items:center;justify-content:center;gap:10px;min-height:26px;margin-top:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .chip{font-family:"VT323",monospace;font-size:clamp(16px,2.3vw,20px);color:var(--w);background:#000;border:1px solid var(--w);border-radius:0;padding:7px 14px;cursor:pointer}
+  .chip:hover,.chip:focus-visible{background:var(--w);color:#000;outline:none}
+
+  .title{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:10;padding:20px;text-align:center}
+  .title h1{font-family:"Press Start 2P",monospace;color:var(--w);font-size:clamp(20px,6vw,40px);margin:0;line-height:1.5;letter-spacing:2px}
+  .title .tag{color:var(--dim);letter-spacing:3px;font-size:clamp(12px,3vw,16px)}
+  .title .tag2{color:var(--dim);font-size:14px;max-width:380px;line-height:1.35}
+  .start{font-family:"Press Start 2P",monospace;font-size:12px;color:#000;background:var(--w);border:none;padding:14px 22px;cursor:pointer;letter-spacing:1px;animation:blink 1.2s steps(1) infinite}
+
+  .card{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:8;opacity:0;transition:opacity .5s ease}
+  .card.show{opacity:1}
+  .cardtext{font-family:"Press Start 2P",monospace;color:var(--w);letter-spacing:3px;font-size:clamp(14px,3.6vw,24px);text-align:center}
+  @media (max-width:560px){.phone{max-height:48vh}}
+  @media (prefers-reduced-motion:reduce){.continue,.start,.cur{animation:none}.msg,.line{animation:none}}
+</style>
+
+<div id="wrap">
+  <div class="topbar"><h1>CRYSTAL&nbsp;COURT</h1><span class="sub">OPEN TILL DAWN</span></div>
+
+  <div id="scene1">
+    <canvas id="room" width="240" height="135"></canvas>
+    <div class="textbox">
+      <div id="log" class="log"></div>
+      <div class="barrow"><span id="cont1" class="continue" hidden>[ ENTER &#9656; ]</span></div>
+      <div id="hint1" class="hint"></div>
+    </div>
+  </div>
+
+  <div id="scene2" hidden>
+    <div id="stage2">
+      <div class="phone" id="phone"><div class="phonebar" id="phonebar">Feed</div><div id="phonescreen" class="phonescreen"></div></div>
+      <div class="terminal" id="terminal" hidden>
+        <div class="termbar"><span class="dot"></span><span>[FRIEND]@rig — bash</span></div>
+        <div id="termscreen" class="termscreen"></div>
+      </div>
+      <div class="videoview" id="videoview" hidden><canvas id="vid" width="240" height="135"></canvas></div>
+    </div>
+    <div id="s2narr"></div>
+    <div class="prompt2"><span id="cont2" class="continue" hidden>[ ENTER &#9656; ]</span><div id="chips" class="chips"></div></div>
+    <div class="hint" id="hint2"></div>
+  </div>
+</div>
+
+<div class="title" id="titleScreen">
+  <h1>CRYSTAL<br>COURT</h1>
+  <div class="tag">DEMO · SCENES 1–2</div>
+  <div class="tag2">An 8-bit horror. The mall's been gone for years. Tonight someone's missing.</div>
+  <button class="start" id="startBtn">▶ PRESS START</button>
+</div>
+<div id="card" class="card" hidden><div class="cardtext"></div></div>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const $ = s => document.querySelector(s);
+  let actx=null, waiter=null;
+  function blip(f=200,d=.05,t='square',g=.02){try{if(!actx)return;const o=actx.createOscillator(),x=actx.createGain();o.type=t;o.frequency.value=f;x.gain.value=g;o.connect(x);x.connect(actx.destination);o.start();o.stop(actx.currentTime+d);}catch(e){}}
+  const sleep = ms => new Promise(r=>setTimeout(r, reduce?Math.min(ms,100):ms));
+
+  /* ---- ordered (Bayer) dithering, 1-bit ---- */
+  const BAYER=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  function dith(ctx,d){ ctx.__c=ctx.__c||{}; const k=Math.round(d*40); if(ctx.__c[k])return ctx.__c[k];
+    const t=document.createElement('canvas');t.width=4;t.height=4;const c=t.getContext('2d');const im=c.createImageData(4,4);
+    for(let y=0;y<4;y++)for(let x=0;x<4;x++){const on=((BAYER[y][x]+0.5)/16)<d;const i=(y*4+x)*4;const v=on?243:0;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255;}
+    c.putImageData(im,0,0);return ctx.__c[k]=ctx.createPattern(t,'repeat');}
+
+  /* ---- pixel classroom (1-bit, World-of-Horror-ish) ---- */
+  const cv=$('#room'), cx=cv.getContext('2d');
+  const R=(a,b,c,d)=>cx.fillRect(a|0,b|0,c|0,d|0);
+  function fig(x,y,sc){sc=sc||1;
+    const H=Math.round(7*sc),T=Math.round(11*sc),L=Math.round(10*sc),Wt=Math.round(9*sc);
+    cx.fillStyle='#f3f3f3';                                  // white rim
+    R(x-1,y-1,H+2,H+2); R(x-2,y+H-1,Wt+4,T+2); R(x,y+H+T-1,3,L+2); R(x+Wt-3,y+H+T-1,3,L+2);
+    cx.fillStyle='#000';                                     // black silhouette
+    R(x,y,H,H); R(x-1,y+H,Wt+2,T); R(x+1,y+H+T,2,L); R(x+Wt-2,y+H+T,2,L);
+  }
+  function room(){
+    cx.fillStyle='#000';R(0,0,240,135);
+    // back wall faint texture
+    cx.fillStyle=dith(cx,.06);R(0,0,240,72);
+    // three windows (bright)
+    for(let i=0;i<3;i++){const wx=24+i*64;
+      cx.fillStyle='#f3f3f3';R(wx,12,44,46);
+      cx.fillStyle='#000';R(wx+21,12,2,46);R(wx,33,44,2);R(wx,12,44,2);R(wx,56,44,2);R(wx,12,2,46);R(wx+42,12,2,46);
+    }
+    // floor with light falloff from windows (dither bands, light->dark)
+    const bands=[.5,.42,.34,.28,.22,.17,.13,.1,.07];
+    for(let b=0;b<bands.length;b++){cx.fillStyle=dith(cx,bands[b]);R(0,72+b*7,240,7);}
+    // back door, right, ajar
+    cx.fillStyle='#000';R(196,30,30,42);cx.fillStyle='#f3f3f3';R(196,30,30,2);R(196,30,2,42);R(224,30,2,42);cx.fillStyle='#000';R(220,40,3,8);
+    // desks: white outline rows (perspective: bigger toward front)
+    cx.strokeStyle='#f3f3f3';cx.lineWidth=1;
+    function desk(x,y,w,h){cx.strokeRect(x+.5,y+.5,w,h);cx.beginPath();cx.moveTo(x+2.5,y+h+.5);cx.lineTo(x+2.5,y+h+5);cx.moveTo(x+w-1.5,y+h+.5);cx.lineTo(x+w-1.5,y+h+5);cx.stroke();}
+    desk(28,74,20,7);desk(150,74,22,7);desk(78,92,26,9);desk(168,96,28,9);desk(14,112,32,11);desk(150,116,34,11);
+    // figures: you + two friends (front), Howie alone by the door (back)
+    fig(180,52,.78);   // Howie, by the back door
+    fig(70,90,1);      // friend
+    fig(94,92,1);      // friend
+    fig(40,98,1.18);   // you (front)
+  }
+
+  /* ---- continue (Enter / tap) ---- */
+  function waitGo(el){el.hidden=false;return new Promise(res=>{waiter=()=>{el.hidden=true;waiter=null;blip(300,.04);res();};});}
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&waiter){e.preventDefault();waiter();}});
+  function tapAdvance(e){if(waiter&&!e.target.closest('.chip,.continue,button'))waiter();}
+  $('#scene1').addEventListener('click',tapAdvance);
+  $('#scene2').addEventListener('click',tapAdvance);
+  $('#cont1').onclick=()=>waiter&&waiter();
+  $('#cont2').onclick=()=>waiter&&waiter();
+  $('#card').onclick=()=>waiter&&waiter();
+  function holdOrEnter(ms){return new Promise(res=>{let done=false;const fin=()=>{if(done)return;done=true;waiter=null;res();};waiter=fin;setTimeout(fin,reduce?Math.min(ms,400):ms);});}
+  async function transition(text){
+    const card=$('#card'),ct=card.querySelector('.cardtext');
+    ct.textContent=text;card.hidden=false;void card.offsetWidth;card.classList.add('show');
+    await sleep(reduce?200:650);
+    await holdOrEnter(1600);
+    $('#scene1').hidden=true;$('#scene2').hidden=false;s2narr('');
+    card.classList.remove('show');
+    await sleep(reduce?80:450);card.hidden=true;
+  }
+
+  /* ---- SCENE 1 ---- */
+  const log=$('#log');
+  function addLine(html,cls){const d=document.createElement('div');d.className='line '+(cls||'');d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+  const beats=[
+    {narr:"Bio let out ten minutes ago. The lecture hall is nearly empty \u2014 you, two friends in no hurry to leave, and a quiet guy in the back taking his time with his books."},
+    {you:"Okay, you two have to hear this. The old mall \u2014 Crystal Court, the one they tore down?"},
+    {you:"Supposedly, after midnight, it comes back. The whole place lights up like it's still 1985 \u2014 the shoppers, the food court, the theaters, all of it. You can walk right in."},
+    {you:"And then at dawn it just\u2026 disappears again. Like it was never there."},
+    {you:"We should go check it out sometime. For fun."},
+    {narr:"The girl beside you already has her keys out. \u201cNo way. You are not getting me out there at night \u2014 that place was creepy when it was OPEN.\u201d"},
+    {narr:"The other one doesn't look up from his phone. \u201cThat stuff isn't real.\u201d"},
+    {you:"Whatever. You guys are lame."},
+    {narr:"They go back to their screens. You grab your bag and head for the door."},
+    {narr:"The quiet guy in the back still hasn't left \u2014 books half in his arms, just listening. He catches you looking and ducks out the door ahead of you. You don't think about it again."},
+  ];
+  function renderBeat(b){ log.innerHTML=''; if(b.you) addLine('<b>YOU:</b> \u201c'+b.you+'\u201d','you'); else addLine(b.narr,'narr'); }
+  async function scene1(){
+    $('#hint1').textContent='press ENTER or tap to continue';
+    for(const b of beats){renderBeat(b);blip(b.you?240:190,.03,'square',.015);await waitGo($('#cont1'));}
+    $('#hint1').textContent='';await transition("TWO WEEKS LATER");scene2();
+  }
+
+  /* ---- SCENE 2 ---- */
+  const ps=$('#phonescreen'), ts=$('#termscreen');
+  const setBar=t=>$('#phonebar').textContent=t;
+  const s2narr=t=>$('#s2narr').textContent=t;
+  const scrollP=()=>ps.scrollTop=ps.scrollHeight, scrollT=()=>ts.scrollTop=ts.scrollHeight;
+  async function youMsg(t){await sleep(340);const d=document.createElement('div');d.className='msg you';d.textContent=t;ps.appendChild(d);blip(260,.03,'square',.015);scrollP();await sleep(640);}
+  async function frMsg(t){const dur=Math.min(1600,750+t.length*30);
+    const ti=document.createElement('div');ti.className='typing';ti.innerHTML='<i></i><i></i><i></i>';ps.appendChild(ti);scrollP();
+    await sleep(dur);ti.remove();
+    const d=document.createElement('div');d.className='msg fr';d.textContent=t;ps.appendChild(d);blip(200,.03,'square',.015);scrollP();await sleep(560);}
+  function chips(opts){return new Promise(res=>{const c=$('#chips');c.innerHTML='';
+    opts.forEach((o,i)=>{const b=document.createElement('button');b.className='chip';b.textContent=o;b.onclick=()=>{blip(300,.04);c.innerHTML='';res(i);};c.appendChild(b);});});}
+  // terminal: type a command char-by-char, then print output
+  async function cmd(text){const line=document.createElement('div');
+    line.innerHTML='<span class="pr">[FRIEND]@rig:~$ </span><span class="ct"></span><span class="cur"></span>';
+    ts.appendChild(line);scrollT();const ct=line.querySelector('.ct'),cur=line.querySelector('.cur');
+    for(const ch of text){ct.textContent+=ch;if(ch!==' ')blip(1500,.008,'square',.008);await sleep(110);scrollT();}
+    cur.remove();await sleep(340);}
+  function out(t){const d=document.createElement('div');d.className='out';d.textContent=t;ts.appendChild(d);scrollT();}
+  function showView(v){$('#phone').hidden=v!=='phone';$('#terminal').hidden=v!=='terminal';$('#videoview').hidden=v!=='video';}
+  function drawVid(){const c=$('#vid'),g=c.getContext('2d');
+    g.fillStyle='#000';g.fillRect(0,0,240,135);
+    g.fillStyle=dith(g,.12);g.fillRect(0,0,240,80);        // night sky
+    g.fillStyle=dith(g,.05);g.fillRect(0,80,240,55);       // dark lot
+    g.fillStyle='#000';g.fillRect(0,78,240,2);
+    g.fillStyle=dith(g,.55);g.fillRect(108,52,26,30);      // phone glow
+    g.fillStyle='#f3f3f3';g.fillRect(116,58,10,14);        // face
+    g.fillStyle='#000';g.fillRect(118,62,2,2);g.fillRect(123,62,2,2);}
+
+  async function scene2(){
+    $('#scene1').hidden=true;$('#scene2').hidden=false;showView('phone');setBar('Feed');
+    s2narr("Your dorm. Past midnight. You're scrolling, half-asleep \u2014 your reflection faint in the dark window.");
+    await waitGo($('#cont2'));
+    s2narr("A post stops your thumb. A friend shared a local news link.");
+    const card=document.createElement('div');card.className='newscard';
+    card.innerHTML='<div class="lbl">LOCAL NEWS</div><div class="b"><b>STUDENT MISSING; CAR FOUND ON FORMER MALL SITE.</b> Howie [\u2014], 21, last seen two weeks ago. Vehicle recovered on the vacant lot off [\u2014] Road \u2014 the former site of Crystal Court Mall, demolished 2005. Police report \u201cno clear leads.\u201d</div>';
+    ps.appendChild(card);scrollP();
+    await waitGo($('#cont2'));
+    s2narr("The quiet one from the doorway. The former site of Crystal Court. You sit up.");
+    await waitGo($('#cont2'));
+    s2narr("You text [FRIEND] \u2014 the only person you know who can find things that aren't supposed to be findable.");
+    ps.innerHTML='';setBar('[FRIEND]');
+    await youMsg("you up");
+    await frMsg("it's 1am. obviously");
+    await youMsg("kid from my bio class is missing");
+    await youMsg("they found his car on the lot");
+    await frMsg("\u2026the lot lot?");
+    await youMsg("the lot lot");
+    await frMsg("ok that's not nothing");
+    s2narr("");
+    const a=await chips(["Get the real police report","Check what's online first"]);
+    if(a===1){await frMsg("nothing but the same article recycled three times");await frMsg("if you want the real file i have to go get it");}
+    await youMsg(a===1?"get it":"can you get into the actual case file?");
+    await frMsg("you want me to break into the city case system");
+    await frMsg("for fun");
+    await frMsg("\u2026yes. obviously. gimme a sec");
+
+    /* ---- full computer-only screen ---- */
+    showView('terminal');ts.innerHTML='';
+    s2narr("[FRIEND] gets to work.");
+    await cmd("ssh archive@pd.[town].gov");
+    out("tunnel up.  auth ........ ok");
+    await sleep(500);
+    await cmd("cat cases/4471_reyes.txt");
+    out("=== RECOVERED VEHICLE / CASE 4471 ===\ndriver not present.\nground disturbance, center of lot:\nmarkings \"consistent with ritual symbols\", origin unknown.\nsmall metal object photographed in place \u2014 NOT COLLECTED.\nstatus: SUSPENDED (no leads).");
+    await sleep(700);
+    await cmd("ls evidence/phone/");
+    out("notes.txt   scan_page.png   draft_01.mp4");
+    await sleep(600);
+    await cmd("file evidence/phone/draft_01.mp4");
+    out("draft_01.mp4: video, 0:48 \u2014 unposted youtube draft");
+    await sleep(500);
+    s2narr("There it is \u2014 an unposted video, the last thing Howie made.");
+    await chips(["Return to the phone"]);
+
+    /* ---- back to phone ---- */
+    showView('phone');setBar('[FRIEND]');s2narr("");
+    await frMsg("you seeing this");
+    await frMsg("he saved a video the night he went out there");
+    await frMsg("never posted it. want it?");
+    const v=await chips(["View the video","Not yet"]);
+    if(v===0){
+      drawVid();showView('video');
+      s2narr("A dark, empty lot. Howie's face, lit by his own phone. His mouth starts to move \u2014");
+      await waitGo($('#cont2'));
+      s2narr("The clip freezes on the first frame. Whatever he was about to say is gone.");
+      await waitGo($('#cont2'));
+      showView('phone');s2narr("");
+      await youMsg("ok that was deeply not okay");
+    } else {
+      await frMsg("fair. it'll be here when you're ready");
+    }
+
+    /* ---- decide to meet at the library ---- */
+    await frMsg("but the notes. the symbols. the mall \u2014 he was researching something");
+    await youMsg("then so are we");
+    await youMsg("library opens at 9. meet me there");
+    await frMsg("i'll bring the laptop. you bring coffee");
+    s2narr("Tomorrow morning, the campus library. Whatever Howie found, you're going to find it too.");
+    await waitGo($('#cont2'));
+    s2narr("\u2014  END OF SCENE 2  \u2014");
+    $('#chips').innerHTML='';
+    const again=document.createElement('button');again.className='chip';again.textContent='\u21BB Play again';again.onclick=()=>location.reload();$('#chips').appendChild(again);
+  }
+
+  /* ---- boot ---- */
+  room();
+  $('#startBtn').onclick=()=>{try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}blip(330,.06,'square',.03);$('#titleScreen').style.display='none';scene1();};
+})();
+</script>
