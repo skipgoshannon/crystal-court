@@ -56,8 +56,12 @@ Prompt for Claude Code when ready:
 
 ---
 
-## 5. Top-down polish — kitchen & movement (next session, 2026-06)
-Author feedback on the first top-down build. All in `game.js`:
+## 5. Top-down polish — kitchen & movement — ✅ DONE (2026-07)
+Done: Lenny no longer follows anywhere (River is alone in the kitchen; in the lot he stands by the
+car); the drawer/intro hints are removed; the player's collision box now matches the sprite so River
+stops flush against counters/cabinets/table (drawer/door interaction radii retuned to match).
+
+Original feedback (for reference) — all in `game.js`:
 
 - **No follower.** Remove Lenny following River around — it feels weird. In the **kitchen, River is
   alone** (drop Lenny from that scene entirely). Do **not** add any narration explaining his absence —

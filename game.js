@@ -460,16 +460,12 @@
   function tdSay(html){tdtext.innerHTML=html;tdbox.hidden=false;blip(200,.03,'square',.015);
     return waitGo($('#contTD')).then(()=>{tdbox.hidden=true;});}
 
-  /* collision helpers — rects are [x,y,w,h]; player is a small AABB centered on (x,y) */
+  /* collision helpers — rects are [x,y,w,h]; player box matches the sprite (feet at (x,y)) */
   function rectsOverlap(ax,ay,aw,ah,bx,by,bw,bh){return ax<bx+bw&&ax+aw>bx&&ay<by+bh&&ay+ah>by;}
-  function blocked(map,cx,cy){const hw=4,hh=3,x=cx-hw,y=cy-hh,w=hw*2,h=hh*2;
+  function blocked(map,cx,cy){const hw=5,x=cx-hw,y=cy-16,w=hw*2,h=16;
     const b=map.bounds;if(x<b[0]||y<b[1]||x+w>b[0]+b[2]||y+h>b[1]+b[3])return true;
     for(const s of map.solids)if(rectsOverlap(x,y,w,h,s[0],s[1],s[2],s[3]))return true;return false;}
   function moveAABB(map,P,dx,dy){if(dx&&!blocked(map,P.x+dx,P.y))P.x+=dx;if(dy&&!blocked(map,P.x,P.y+dy))P.y+=dy;}
-  function followLenny(map,L,P){let tx=P.x,ty=P.y+14;
-    if(map.lennyMinY!=null)ty=Math.max(ty,map.lennyMinY); // can't cross past the grass line onto the lot
-    const dx=tx-L.x,dy=ty-L.y;if(Math.hypot(dx,dy)>9){L.x+=dx*0.07;L.y+=dy*0.07;
-      if(map.lennyMinY!=null)L.y=Math.max(L.y,map.lennyMinY);}}
   function itemLive(i){return !(i.flag&&state.inv[i.flag]);}
   function nearest(map,px,py){let best=null,bd=1e9;
     const all=map.items.filter(itemLive).concat(map.pois);
@@ -482,7 +478,7 @@
     map.draw(wx);
     for(const i of map.items)if(itemLive(i)&&i.draw)i.draw(wx,i);
     for(const p of map.pois)if(p.draw)p.draw(wx,p);
-    const ppl=[{x:P.x,y:P.y,me:1},{x:L.x,y:L.y,me:0}].sort((a,b)=>a.y-b.y);
+    const ppl=[{x:P.x,y:P.y,me:1}];if(L)ppl.push({x:L.x,y:L.y,me:0});ppl.sort((a,b)=>a.y-b.y);
     for(const pr of ppl)pr.me?drawRiver(pr.x,pr.y):drawLenny(pr.x,pr.y);
     if(prompt&&((performance.now()/350)|0)%2===0){const mx=prompt.x,my=prompt.y-(prompt.mk||20);
       wx.fillStyle='#f3f3f3';wR(mx-3,my,6,4);wR(mx-1,my+4,2,3);}
@@ -492,7 +488,7 @@
     $('#scene1').hidden=true;$('#scene2').hidden=true;$('#scene3').hidden=true;$('#td').hidden=false;
     tdbox.hidden=true;$('#still').hidden=true;
     for(const k in held)held[k]=false;actionPressed=false;
-    const P={x:map.spawn.x,y:map.spawn.y},L={x:(map.lennySpawn||map.spawn).x,y:(map.lennySpawn||map.spawn).y};
+    const P={x:map.spawn.x,y:map.spawn.y},L=map.lennySpawn?{x:map.lennySpawn.x,y:map.lennySpawn.y}:null;
     const SPEED=1.15;tdRunning=true;tdPaused=false;
     function step(){
       if(!tdRunning)return;
@@ -500,7 +496,6 @@
         let vx=(held.right?1:0)-(held.left?1:0),vy=(held.down?1:0)-(held.up?1:0);
         if(vx&&vy){vx*=.7071;vy*=.7071;}
         moveAABB(map,P,vx*SPEED,vy*SPEED);
-        followLenny(map,L,P);
         const prompt=nearest(map,P.x,P.y);
         if(actionPressed){actionPressed=false;
           if(prompt){tdPaused=true;blip(300,.04);
@@ -545,27 +540,27 @@
     state.inv[flag]=true;checkpoint(name);await tdSay(found);
   }
   function kitchenMap(){return {
-    id:'kitchen',draw:drawKitchen,spawn:{x:120,y:120},lennySpawn:{x:142,y:122},
+    id:'kitchen',draw:drawKitchen,spawn:{x:120,y:120},
     bounds:[10,40,220,92],
     solids:[[10,20,100,20],[134,20,16,20],[150,20,36,20],[186,20,44,20],[96,72,48,26],[212,46,20,40]],
     items:[],
     pois:[
-      {x:39,y:42,r:14,mk:18,onAction:()=>kitchenDrawer('salt','salt',
+      {x:39,y:42,r:18,mk:18,onAction:()=>kitchenDrawer('salt','salt',
         "You slide the drawer open. Behind the takeout menus — a heavy blue cylinder of salt. You drop it in your bag.",
         "Just the empty space where the salt was.")},
-      {x:66,y:42,r:12,mk:18,onAction:()=>tdSay("Dish towels, rubber bands, a dead battery. The junk drawer earns its name.")},
-      {x:93,y:42,r:14,mk:18,onAction:()=>kitchenDrawer('knife','knife',
+      {x:66,y:42,r:18,mk:18,onAction:()=>tdSay("Dish towels, rubber bands, a dead battery. The junk drawer earns its name.")},
+      {x:93,y:42,r:18,mk:18,onAction:()=>kitchenDrawer('knife','knife',
         "Under the spare keys: your dad's old pocketknife, bone handle worn smooth. You fold it into your pocket.",
         "Empty now — the knife's in your pocket.")},
-      {x:122,y:42,r:16,mk:18,onAction:async()=>{
+      {x:122,y:42,r:18,mk:18,onAction:async()=>{
         if(state.inv.salt&&state.inv.knife){stopTopDown();await showCard("THE OLD LOT · AFTER MIDNIGHT");lot();}
-        else await tdSay("Not yet. You came down for the salt and your dad's old pocketknife — they're in the drawers.");}},
+        else await tdSay("Not yet. You came down for the salt and your dad's old pocketknife.");}},
     ],
   };}
   function kitchen(resuming){state.scene='kitchen';checkpoint('kitchen');
     runTopDown(kitchenMap());
     if(!resuming)setTimeout(()=>{if(tdRunning&&!tdPaused){tdPaused=true;
-      tdSay("Past eleven. Your kitchen, lights low. <b>Lenny:</b> “Grab the salt and a knife. I'll keep watch for your roommate.” (Walk to the drawers — press ✦ — then head out the doorway up top.)")
+      tdSay("Past eleven. Your kitchen, lights low. Salt and a knife — the ritual needs both.")
         .then(()=>{tdPaused=false;});}},120);
   }
 
@@ -592,7 +587,7 @@
   function ritualReady(){return state.inv.salt&&state.inv.knife&&state.inv.token&&state.flags.incantationWritten;}
   function lotMissing(){const need=[];if(!state.inv.token)need.push("the token from the ground");if(!state.inv.salt)need.push("the salt");if(!state.inv.knife)need.push("the knife");return need;}
   function lotMap(){return {
-    id:'lot',draw:drawLot,spawn:{x:120,y:120},lennySpawn:{x:168,y:118},lennyMinY:104,
+    id:'lot',draw:drawLot,spawn:{x:120,y:120},lennySpawn:{x:140,y:120},
     bounds:[6,8,228,122],
     solids:[[150,104,52,22]],
     items:[{x:150,y:58,flag:'token',r:12,mk:14,
